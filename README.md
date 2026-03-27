@@ -134,7 +134,7 @@ In Supabase Dashboard, go to **Authentication → Users → Add user** and creat
 npm start
 ```
 
-Opens the app at [http://localhost:3000](http://localhost:3000). The page hot-reloads on file changes.
+Opens the app at [https://documents-supabase-app.vercel.app](https://documents-supabase-app.vercel.app). The page hot-reloads on file changes.
 
 ---
 
