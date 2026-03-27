@@ -1,70 +1,161 @@
-# Getting Started with Create React App
+# Documents App — Setup Guide
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A secure, user-specific document storage application built with React and Supabase.
+
+---
+
+## Prerequisites
+
+Make sure the following are installed on your machine before proceeding:
+
+| Tool | Minimum Version | Download |
+|------|----------------|----------|
+| Node.js | v18+ | https://nodejs.org |
+| npm | v9+ | Comes with Node.js |
+
+You will also need a **Supabase account** and project. Sign up for free at https://supabase.com.
+
+---
+
+## Environment Setup
+
+### 1. Clone the repository
+
+```bash
+git clone git@github.com:UsamaMushtaq16/Documents-Supabase-App.git
+cd Documents-Supabase-App
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure environment variables
+
+Create a `.env` file in the root of the `Documents-Supabase-App` folder:
+
+```bash
+# Documents-Supabase-App/.env
+
+REACT_APP_SUPABASE_URL=https://your-project-id.supabase.co
+REACT_APP_SUPABASE_PUBLISHABLE_DEFAULT_KEY=your-anon-public-key
+```
+
+> **Where to find these values:**
+> 1. Go to your [Supabase Dashboard](https://supabase.com/dashboard)
+> 2. Select your project
+> 3. Navigate to **Project Settings → API**
+> 4. Copy the **Project URL** and the **`anon` `public`** key
+
+### 4. Set up Supabase — Database Table
+
+Run the following SQL in the **Supabase SQL Editor** (Dashboard → SQL Editor → New query):
+
+```sql
+create table documents (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) not null,
+  title text not null,
+  file_url text not null,
+  created_at timestamptz default now()
+);
+```
+
+### 5. Set up Supabase — Storage Bucket
+
+1. Go to **Storage** in your Supabase dashboard
+2. Click **New bucket**
+3. Name it exactly: `documents`
+4. Leave it as **Private** (access is controlled via signed URLs)
+
+### 6. Enable Row Level Security (RLS)
+
+RLS ensures each user can only see and manage their own documents. Run in the SQL Editor:
+
+```sql
+-- Enable RLS on the table
+alter table documents enable row level security;
+
+-- Users can only read their own documents
+create policy "Users can view own documents"
+  on documents for select
+  using (auth.uid() = user_id);
+
+-- Users can only insert their own documents
+create policy "Users can insert own documents"
+  on documents for insert
+  with check (auth.uid() = user_id);
+
+-- Users can only delete their own documents
+create policy "Users can delete own documents"
+  on documents for delete
+  using (auth.uid() = user_id);
+```
+
+Also apply a storage policy so users can only access their own files:
+
+```sql
+-- Allow users to upload files to their own folder
+create policy "Users can upload own files"
+  on storage.objects for insert
+  with check (
+    bucket_id = 'documents'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+-- Allow users to read their own files
+create policy "Users can read own files"
+  on storage.objects for select
+  using (
+    bucket_id = 'documents'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+-- Allow users to delete their own files
+create policy "Users can delete own files"
+  on storage.objects for delete
+  using (
+    bucket_id = 'documents'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+```
+
+### 7. Create a user account
+
+In Supabase Dashboard, go to **Authentication → Users → Add user** and create a user with an email and password. This is the account you will log in with.
+
+---
+
+## Running the App
+
+```bash
+npm start
+```
+
+Opens the app at [http://localhost:3000](http://localhost:3000). The page hot-reloads on file changes.
+
+---
+
+## How to Use the App
+
+1. **Sign in** — Enter your email and password on the login screen and click **Sign in**.
+
+2. **Upload a document** — On the home screen, enter a title for your document, select a file from your machine, and click **Upload**. The file is securely stored in Supabase Storage and its metadata is saved to the database.
+
+3. **Open a document** — Click **Open** next to any document to view it in a new browser tab. Links are valid for 7 days (signed URLs).
+
+4. **Delete a document** — Click **Delete** next to a document and confirm the prompt. Both the database record and the file in storage are permanently removed.
+
+5. **Sign out** — Click **Sign out** in the header to end your session securely.
+
+---
 
 ## Available Scripts
 
-In the project directory, you can run:
-
-### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+| Command | Description |
+|---------|-------------|
+| `npm start` | Start the development server at `localhost:3000` |
+| `npm run build` | Create an optimised production build in `/build` |
+| `npm test` | Run the test suite in watch mode |
