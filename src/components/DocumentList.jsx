@@ -19,6 +19,21 @@ const DocumentList = ({ documents, loading, onDelete }) => {
     );
   }
 
+  const handleDownload = async (doc) => {
+    try {
+      const response = await fetch(doc.file_url);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = doc.title;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("Download failed: " + err.message);
+    }
+  };
+
   const handleDelete = async (doc) => {
     if (!window.confirm(`Delete "${doc.title}"?`)) return;
     const filePath = new URL(doc.file_url).pathname
@@ -87,6 +102,13 @@ const DocumentList = ({ documents, loading, onDelete }) => {
               >
                 Open
               </a>
+
+              <button
+                onClick={() => handleDownload(doc)}
+                className="text-sm text-green-600 hover:text-green-700 font-medium px-3 py-1.5 rounded-lg hover:bg-green-50 transition-colors"
+              >
+                Download
+              </button>
 
               <button
                 onClick={() => handleDelete(doc)}
