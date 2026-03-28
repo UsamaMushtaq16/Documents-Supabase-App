@@ -146,9 +146,11 @@ Opens the app at [https://documents-supabase-app.vercel.app](https://documents-s
 
 3. **Open a document** — Click **Open** next to any document to view it in a new browser tab. Links are valid for 7 days (signed URLs).
 
-4. **Delete a document** — Click **Delete** next to a document and confirm the prompt. Both the database record and the file in storage are permanently removed.
+4. **Download a document** — Click **Download** next to any document to save it directly to your device. The file is fetched via the secure signed URL and saved using the document title as the filename.
 
-5. **Sign out** — Click **Sign out** in the header to end your session securely.
+5. **Delete a document** — Click **Delete** next to a document and confirm the prompt. Both the database record and the file in storage are permanently removed.
+
+6. **Sign out** — Click **Sign out** in the header to end your session securely.
 
 ---
 
